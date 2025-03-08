@@ -1,5 +1,6 @@
 from typing import List
-from node import Node
+from src.node import Node
+from src.message import Message
 
 class Network: 
     def __init__(self):
@@ -34,6 +35,17 @@ class Network:
         """
         node.leave()
         self.nodes.remove(node)
+        
+    def send_message(self, in_source: Node, in_destination: Node, in_data):
+        """Send message between two nodes <source, destination>
+
+        Args:
+            in_source (Node): source of the message
+            in_destination (Node): message destination
+            in_data (_type_): the content of the message
+        """
+        message = Message(in_source, in_destination, in_data)
+        in_source.send_message(message)
     
     def display_ring(self): 
         """Display ring's connections
