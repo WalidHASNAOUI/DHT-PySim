@@ -1,4 +1,5 @@
 import random 
+import hashlib
 from src.message import Message
 
 class Node: 
@@ -7,7 +8,65 @@ class Node:
         self.node_id: int = node_id if node_id else random.randint(1, 10000)
         self.left: 'Node' = None
         self.right: 'Node' = None
+        self.storage = {}
         
+    def hash_key(self, key): 
+        """Generate a unique key for a given data.
+
+        Args:
+            key (_type_): _description_
+        """
+        return int(hashlib.sha1(key.encode()).hexdigest(), 16) % 10000
+    
+    def find_responsible_node(self, key_id): 
+        """Find the responsible node for a given key_id
+
+        Args:
+            key_id (int): _description_
+        """
+        current = self
+        
+        while current.right and current.node_id < current.right.node_id and current.right.node_id < key_id: 
+            current = current.right
+        
+        return current
+    
+    def put(self, key, value): 
+        """Store data in the responsible node and its neighbors
+
+        Args:
+            key (_type_): key of data 
+            value (_type_): value of data
+        """
+        # Hash the data's key 
+        key_id = self.hash_key(key)
+        print(f"key_id = [{key_id}]")
+        
+        # Find the responsible node based the hashed key 
+        responsible_node = self.find_responsible_node(key_id)
+        print(f"Responsible node is : [{responsible_node}]")
+        
+        # Replicate the data in 3 neighbors <Replication degree = 3>
+        current = responsible_node
+        for _ in range(3): 
+            current.storage[key] = value
+            current = current.right if current.right else self
+    
+    def get(self, key):
+        """Get the data stored in the ring network.
+
+        Args:
+            key (_type_): _description_
+        """
+        # Hash the key 
+        key_id = self.hash_key(key)
+        
+        # Find the responsible node 
+        responsible_node = self.find_responsible_node(key_id)
+        
+        # Retreive the data + return it 
+        return responsible_node.storage.get(key, "Error: Data not found !")
+    
     def join (self, existing_node: 'Node'): 
         """Insert a node in a ring network by finding its right place
 
