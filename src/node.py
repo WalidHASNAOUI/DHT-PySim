@@ -9,6 +9,17 @@ class Node:
         self.left: 'Node' = None
         self.right: 'Node' = None
         self.storage = {}
+        self.long_links = []
+        
+    def add_long_link(self, node): 
+        """Add a new long link to another distant node.
+
+        Args:
+            node (Node): Long 
+        """
+        # Check if node is not already in the long_links list 
+        if node not in self.long_links:
+            self.long_links.append(node)
         
     def hash_key(self, key): 
         """Generate a unique key for a given data.
@@ -110,7 +121,7 @@ class Node:
         self.left = None
         
     def send_message(self, message:Message):
-        """Transfert the message to the nearby neighbor
+        """Transfert the message to the nearby neighbor. (classical methode)
 
         Args:
             message (Message): message
@@ -131,6 +142,49 @@ class Node:
             else: 
                 print(f"[{self.node_id}] Forwarding to -> {self.left.node_id}")
                 self.left.send_message(message)
+        
+    def send_message_with_long_links(self, message:Message): 
+        """Optimal routing using long links. Our approach keep an hybrid solution, 
+           -Fast routing with long links 
+           -Classical routing as backup
+
+        Args:
+            in_message (_type_): _description_
+        """
+        print(f"[{self}] Send message -> {message}")
+        
+        # Check if we've reached the destination 
+        if self.node_id == message.destination.node_id: 
+            print(f"[{self.node_id}] Message received ! : '{message.data}'")
+            return 
+        
+        # Find the shortest way between neighbors - (left/right)
+        distance_right = (message.destination.node_id - self.right.node_id) % 10000
+        distance_left = (self.left.node_id - message.destination.node_id) % 10000
+        
+        if distance_right < distance_left: 
+            best_choice = self.right
+            min_distance = distance_right
+        else: 
+            best_choice = self.left
+            min_distance = distance_left
+            
+        # Check if long links of current node offer shortest distance 
+        for node in self.long_links: 
+            distance = abs(message.destination.node_id - node.node_id)
+            if distance < min_distance:
+                min_distance = distance
+                best_choice = node
+                
+        # Check which link has been selected, classical neighbor or a long link 
+        if best_choice in self.long_links: 
+            print(f"[{self}] Forwarding - Use a long link to {best_choice}")
+        else:
+            print(f"[{self}] Forwarding - Classical routing to {best_choice}")
+        
+        # Forwarding the message 
+        best_choice.send_message_with_long_links(message)
+        
         
     def __repr__(self):
         return f"Node({self.node_id})"

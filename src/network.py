@@ -36,7 +36,7 @@ class Network:
         node.leave()
         self.nodes.remove(node)
         
-    def send_message(self, in_source: Node, in_destination: Node, in_data):
+    def send_message(self, in_source: Node, in_destination: Node, in_data, long_links: bool=0):
         """Send message between two nodes <source, destination>
 
         Args:
@@ -45,8 +45,11 @@ class Network:
             in_data (_type_): the content of the message
         """
         message = Message(in_source, in_destination, in_data)
-        in_source.send_message(message)
-    
+        if not long_links:
+            in_source.send_message(message)
+        else: 
+            in_source.send_message_with_long_links(message)
+                
     def display_ring(self): 
         """Display ring's connections
         """
